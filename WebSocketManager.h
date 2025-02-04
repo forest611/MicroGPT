@@ -37,6 +37,9 @@ public:
         return client.send(message);
     }
 
+    static bool sendBinary(char* message, size_t length) {
+        return client.sendBinary(message, length);
+    }
 
     static bool isConnected() {
         return client.available();

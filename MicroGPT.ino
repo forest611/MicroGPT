@@ -77,6 +77,8 @@ void loop() {
     WebSocketManager::begin(onWebSocketMessage);
   }
 
+  delay(10);
+
 }
 
 void sendToWebSocket(){
@@ -88,18 +90,18 @@ void sendToWebSocket(){
     Serial.println("Recording Failed!");
   } 
 
-  // 録音データをCSVに変換
-  char* csv_buffer = (char*)heap_caps_malloc(record_seconds * sample_rate * sizeof(char), MALLOC_CAP_8BIT);
-  int16ArrayToCsv(record_pointer, record_seconds * sample_rate, csv_buffer, sizeof(csv_buffer));
+  // // 録音データをCSVに変換
+  // char* csv_buffer = (char*)heap_caps_malloc(record_seconds * sample_rate * sizeof(char), MALLOC_CAP_8BIT);
+  // int16ArrayToCsv(record_pointer, record_seconds * sample_rate, csv_buffer, sizeof(csv_buffer));
 
   // 録音データをWebSocketに送信
   Serial.println("Sending record...");
 
-  WebSocketManager::send(csv_buffer);
+  WebSocketManager::sendBinary((char*)record_pointer, record_seconds * sample_rate * sizeof(int16_t));
 
   // 録音データを解放
   heap_caps_free(record_pointer);
-  heap_caps_free(csv_buffer);
+  // heap_caps_free(csv_buffer);
 
   Serial.println("Sent!");
 }
