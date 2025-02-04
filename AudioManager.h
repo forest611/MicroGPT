@@ -10,8 +10,8 @@ private:
 
     static constexpr float TARGET_AMPLITUDE = 32767 * 0.8;
 
-    static void displayStatus(const char* message) {
-        M5.Display.println(message);
+    static void logStatus(const char* message) {
+        Serial.println(message);
     }
 
     static void normalize(int16_t* &data, int record_length) {
@@ -46,12 +46,12 @@ public:
         int16_t* record_pointer = (int16_t*)heap_caps_malloc(seconds * sample_rate * sizeof(int16_t), MALLOC_CAP_8BIT);
 
         if (record_pointer == nullptr) {
-            displayStatus("Failed to allocate memory");
+            logStatus("Failed to allocate memory");
             return nullptr;
         }
 
         is_recording = true;
-        displayStatus("Recording...");
+        logStatus("Recording...");
 
         // 録音開始処理
         if (!M5.Mic.isEnabled()){
@@ -62,7 +62,7 @@ public:
         // 録音開始
         size_t record_size = sample_rate * seconds;
         if (!M5.Mic.record(record_pointer, record_size,sample_rate)) {
-            displayStatus("Recording Failed!");            
+            logStatus("Recording Failed!");            
         }
 
         is_recording = false;
@@ -75,7 +75,7 @@ public:
         if (is_playing || is_recording) return false;
 
         is_playing = true;
-        displayStatus("Playing...");
+        logStatus("Playing...");
 
         // 再生開始処理
         if (!M5.Speaker.isEnabled()){
@@ -87,7 +87,7 @@ public:
 
         // 再生開始
         if (!M5.Speaker.playRaw(record_pointer, record_size, sample_rate)) {
-            displayStatus("Playing Failed!");            
+            logStatus("Playing Failed!");            
         }
 
         // 再生中待ち

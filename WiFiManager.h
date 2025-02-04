@@ -7,15 +7,16 @@
 class WiFiManager {
 private:
     // WiFi設定
-    const char* ssid = "Buffalo-G-AF20";      // ここにSSIDを設定
-    const char* password = "";   // ここにパスワードを設定
+    static const char* ssid;      // ここにSSIDを設定
+    static const char* password;   // ここにパスワードを設定
     
     static void displayStatus(const char* message) {
         M5.Lcd.println(message);
     }
 
 public:
-    bool connect() {
+
+    static bool connect() {
         displayStatus("Connecting to WiFi...");
         
         WiFi.begin(ssid, password);
@@ -38,15 +39,18 @@ public:
         }
     }
     
-    bool isConnected() {
+    static bool isConnected() {
         return WiFi.status() == WL_CONNECTED;
     }
     
-    void disconnect() {
+    static void disconnect() {
         WiFi.disconnect(true);
         WiFi.mode(WIFI_OFF);
         displayStatus("WiFi Disconnected");
     }
 };
+
+const char* WiFiManager::ssid = "Buffalo-G-AF20";
+const char* WiFiManager::password = "37xk647bmgfgv";
 
 #endif // NETWORK_MANAGER_H
