@@ -1,33 +1,38 @@
 # MicroGPT
 
-M5StickCPlus用のChatGPTクライアント
+M5StickC Plusを使用して音声入力でChatGPTと会話できるデバイスを作成するプロジェクトです。
 
 ## 機能
 
-- WiFi接続
-- 音声録音・再生
-- ChatGPT連携（開発中）
+- 音声入力による会話
+- WebSocketを使用したサーバーとの通信
+- M5StickC Plusのディスプレイによる状態表示
+- HAT-SPK2を使用した音声出力
 
-## ハードウェア要件
+## 必要なハードウェア
 
-- M5StickCPlus
+- M5StickC Plus
 - HAT-SPK2（スピーカーモジュール）
 
-## 開発環境
+## セットアップ方法
 
-- Arduino IDE
-- ESP32ボードパッケージ
-- M5Unifiedライブラリ
+1. Arduino IDEに必要なライブラリをインストール
+   - M5Unified
+   - WebSockets
 
-## セットアップ
-
-1. Arduino IDEをインストール
-2. ESP32ボードパッケージをインストール
-3. M5Unifiedライブラリをインストール
-4. `WiFiManager.h`のSSIDとパスワードを設定
-5. `deploy.sh`を使用してビルド・デプロイ
+2. M5StickC PlusにMicroGPT.inoを書き込み
 
 ## 使用方法
 
-- ボタンA：音声録音（5秒）と再生
-- ボタンB：画面クリア
+1. デバイスの電源を入れると自動的にWiFiに接続します
+2. サーバーとの接続が確立すると会話が可能になります
+3. ボタンを押して音声入力を開始し、会話を楽しんでください
+
+## ファイル構成
+
+- `MicroGPT.ino`: メインのArduinoスケッチ
+- `WiFiManager.h`: WiFi接続管理
+- `AudioManager.h`: 音声入出力管理
+- `WebSocketManager.h`: WebSocket通信管理
+- `monitor.sh`: シリアルモニター用スクリプト
+- `deploy.sh`: デプロイ用スクリプト
