@@ -7,8 +7,13 @@ WebsocketsClient WebSocketManager::client;
 bool WebSocketManager::initialized = false;
 bool WebSocketManager::connectionActive = false;
 
-size_t sample_rate = 16000;
-size_t record_seconds = 1;
+const size_t sample_rate = 16000;
+const size_t record_seconds = 1;
+
+const String ssid = "Buffalo-G-AF20";
+const String password = "37xk647bmgfgv";
+
+bool isRecording = false;
 
 // 録音データのポインタ
 int16_t* record_pointer = nullptr;
@@ -38,7 +43,7 @@ void setup() {
   M5.Display.println("MicroGPT");
   
   // WiFi接続
-  if (!WiFiManager::connect()) {
+  if (!WiFiManager::connect(ssid, password)) {
     M5.Display.println("Please restart");
     while(1) { delay(100); }
   }
@@ -50,16 +55,15 @@ void setup() {
   AudioManager::enableSpeaker();
 }
 
-bool isRecording = false;
-
 void loop() {
+
   M5.update();  // ボタンの状態を更新
   WebSocketManager::update();
   
   // WiFi接続が切れた場合の再接続処理
   if (!WiFiManager::isConnected()) {
-    M5.Display.println("Reconnecting...");
-    WiFiManager::connect();
+    M5.Display.println("WiFi Disconnected Please restart");
+    delay(1000);
   }
 
   // ボタンAを押している間は録音を行う
@@ -68,7 +72,7 @@ void loop() {
     if (!isRecording){
       startListening();
     }
-    
+    //録音中
     transcribe();
   }
 
@@ -78,7 +82,6 @@ void loop() {
     M5.Display.println("Transcribing...");
   }
 
-  // delay(10);
 }
 
 bool startListening(){

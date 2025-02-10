@@ -14,6 +14,7 @@ private:
         Serial.println(message);
     }
 
+    // ノーマライズ関数
     static void normalize(int16_t* &data, int record_length) {
         // 最大振幅を検出
         int16_t max_amplitude = 0;
@@ -38,7 +39,6 @@ private:
     }
 
 public:
-    // 録音開始 使用後はheap_caps_freeで解放する
 
     static bool enableMic() {
         M5.Speaker.end();
@@ -71,7 +71,7 @@ public:
         return true;
     }
 
-
+    // 録音開始
     static bool record(int16_t* record_pointer, double seconds, size_t sample_rate) {
 
         if (!M5.Mic.isEnabled()) {
@@ -120,7 +120,6 @@ public:
         if (is_playing || is_recording) return false;
 
         is_playing = true;
-        logStatus("Playing...");
 
         // normalize(record_pointer, record_size);
 
@@ -136,7 +135,7 @@ public:
         }
 
         is_playing = false;
-        M5.Speaker.end();
+
         return true;
     }
 };

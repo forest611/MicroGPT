@@ -6,9 +6,6 @@
 
 class WiFiManager {
 private:
-    // WiFi設定
-    static const char* ssid;      // ここにSSIDを設定
-    static const char* password;   // ここにパスワードを設定
     
     static void displayStatus(const char* message) {
         M5.Lcd.println(message);
@@ -16,7 +13,7 @@ private:
 
 public:
 
-    static bool connect() {
+    static bool connect(String ssid, String password) {
         displayStatus("Connecting to WiFi...");
         
         WiFi.begin(ssid, password);
@@ -49,8 +46,5 @@ public:
         displayStatus("WiFi Disconnected");
     }
 };
-
-const char* WiFiManager::ssid = "Buffalo-G-AF20";
-const char* WiFiManager::password = "37xk647bmgfgv";
 
 #endif // NETWORK_MANAGER_H
