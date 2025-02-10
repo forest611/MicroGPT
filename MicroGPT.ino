@@ -4,8 +4,10 @@
 #include "WebSocketManager.h"
 
 WebsocketsClient WebSocketManager::client;
+bool WebSocketManager::initialized = false;
+bool WebSocketManager::connectionActive = false;
 
-size_t sample_rate = 4000;
+size_t sample_rate = 16000;
 size_t record_seconds = 1;
 
 void setup() {
@@ -90,31 +92,13 @@ void sendToWebSocket(){
     Serial.println("Recording Failed!");
   } 
 
-  // // 録音データをCSVに変換
-  // char* csv_buffer = (char*)heap_caps_malloc(record_seconds * sample_rate * sizeof(char), MALLOC_CAP_8BIT);
-  // int16ArrayToCsv(record_pointer, record_seconds * sample_rate, csv_buffer, sizeof(csv_buffer));
-
-  // 録音データをWebSocketに送信
-  Serial.println("Sending record...");
-
   WebSocketManager::sendBinary((char*)record_pointer, record_seconds * sample_rate * sizeof(int16_t));
 
   // 録音データを解放
   heap_caps_free(record_pointer);
-  // heap_caps_free(csv_buffer);
-
-  Serial.println("Sent!");
 }
 
 void onWebSocketMessage(WebsocketsMessage message) {
   // WebSocketからのメッセージを処理
   Serial.println(message.data());
-}
-
-void int16ArrayToCsv(int16_t* buffer, size_t size, char* output, size_t maxLen) {
-    size_t pos = 0;
-    for (size_t i = 0; i < size; i++) {
-        pos += snprintf(output + pos, maxLen - pos, "%d%s", buffer[i], (i < size - 1) ? "," : "");
-        if (pos >= maxLen) break;  // バッファオーバーフローを防ぐ
-    }
 }
