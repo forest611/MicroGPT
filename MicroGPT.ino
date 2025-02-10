@@ -10,6 +10,9 @@ bool WebSocketManager::connectionActive = false;
 size_t sample_rate = 16000;
 size_t record_seconds = 1;
 
+// 録音データのポインタ
+int16_t* record_pointer = nullptr;
+
 void setup() {
 
   Serial.begin(115200);
@@ -43,6 +46,8 @@ void setup() {
   // WebSocket接続
   WebSocketManager::begin(onWebSocketMessage);
 
+  //スピーカー有効化
+  AudioManager::enableSpeaker();
 }
 
 bool isRecording = false;
@@ -60,42 +65,61 @@ void loop() {
   // ボタンAを押している間は録音を行う
   if (M5.BtnA.isPressed()) {
     //押し始め
-    if (!isRecording) {
-      isRecording = true;
-      WebSocketManager::send("start");
+    if (!isRecording){
+      startListening();
     }
-
-    sendToWebSocket();
+    
+    transcribe();
   }
 
   //押し終わり
   if (M5.BtnA.wasReleased()) {
-    isRecording = false;
-    WebSocketManager::send("end");
+    finishListening();    
+    M5.Display.println("Transcribing...");
   }
 
-  // ボタンBで再接続
-  if (M5.BtnB.wasPressed()) {
-    WebSocketManager::begin(onWebSocketMessage);
-  }
-
-  delay(10);
-
+  // delay(10);
 }
 
-void sendToWebSocket(){
-
-  // 録音開始
-  int16_t* record_pointer = AudioManager::record(record_seconds, sample_rate);
-
+bool startListening(){
+  
+  record_pointer = (int16_t*)heap_caps_malloc(record_seconds * sample_rate * sizeof(int16_t), MALLOC_CAP_DMA);
   if (record_pointer == nullptr) {
-    Serial.println("Recording Failed!");
-  } 
+    Serial.println("Failed to allocate memory");
+    return false;
+  }
 
-  WebSocketManager::sendBinary((char*)record_pointer, record_seconds * sample_rate * sizeof(int16_t));
+  isRecording = true;
+  WebSocketManager::send("start");
+  M5.Display.println("Listening...");
+  Serial.println("Listening...");
+
+  return true;
+}
+
+bool finishListening(){
+
+  // スピーカー有効化
+  // AudioManager::enableSpeaker();
+
+  isRecording = false;
+  WebSocketManager::send("end");
 
   // 録音データを解放
   heap_caps_free(record_pointer);
+
+  Serial.println("Listening Finished");
+
+  return true;
+}
+
+void transcribe(){
+
+  if (AudioManager::record(record_pointer,record_seconds, sample_rate)){
+    WebSocketManager::sendBinary((char*)record_pointer, record_seconds * sample_rate * sizeof(int16_t));
+    return;
+  }
+  Serial.println("Recording Failed");  
 }
 
 void onWebSocketMessage(WebsocketsMessage message) {

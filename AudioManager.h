@@ -39,51 +39,90 @@ private:
 
 public:
     // 録音開始 使用後はheap_caps_freeで解放する
-    static int16_t* record(double seconds, size_t sample_rate) {
-        if (is_recording || is_playing) return nullptr;
 
-        // メモリ確保
-        int16_t* record_pointer = (int16_t*)heap_caps_malloc(seconds * sample_rate * sizeof(int16_t), MALLOC_CAP_8BIT);
+    static bool enableMic() {
+        M5.Speaker.end();
+        M5.Mic.begin();
+        
+        if (M5.Mic.begin()) {
+            logStatus("Mic Begin Success");
+        }
+        
+        while (!M5.Mic.isEnabled()) { 
+            M5.update();
+            delay(10);    
+        }
+        logStatus("Mic Enabled");
+        return true;
+    }
+    
+    static bool enableSpeaker() {
+        M5.Mic.end();
+        
+        if (M5.Speaker.begin()) {
+            logStatus("Speaker Begin Success");
+        }
 
+        while (!M5.Speaker.isEnabled()) { 
+            M5.update();
+            delay(10);    
+        }
+        logStatus("Speaker Enabled");
+        return true;
+    }
+
+
+    static bool record(int16_t* record_pointer, double seconds, size_t sample_rate) {
+
+        if (!M5.Mic.isEnabled()) {
+            logStatus("Mic is not enabled");
+            return false;
+        }
+
+        if (is_recording || is_playing) return false;
+
+        // メモリの確保ができていなかったら終了
         if (record_pointer == nullptr) {
             logStatus("Failed to allocate memory");
-            return nullptr;
+            return false;
         }
 
         is_recording = true;
-        logStatus("Recording...");
-
-        // 録音開始処理
-        if (!M5.Mic.isEnabled()){
-            M5.Mic.begin();
-            while(!M5.Mic.isEnabled()) { delay(10); }
-        }
 
         // 録音開始
         size_t record_size = sample_rate * seconds;
+        
         if (!M5.Mic.record(record_pointer, record_size,sample_rate)) {
             logStatus("Recording Failed!");            
         }
 
+        // 録音中待ち
+        while (!M5.Mic.isRecording()) { 
+            M5.update();
+            delay(10);    
+        }
+
+        // ノーマライズ
+        normalize(record_pointer, record_size);
+
         is_recording = false;
-        M5.Mic.end();
 
-        return record_pointer;
+        return true;
     }
-
+    
     static bool play(int16_t* record_pointer, size_t record_size, size_t sample_rate) {
+
+        if (!M5.Speaker.isEnabled()) {
+            logStatus("Speaker is not enabled");
+            return false;
+        }
+
         if (is_playing || is_recording) return false;
 
         is_playing = true;
         logStatus("Playing...");
 
-        // 再生開始処理
-        if (!M5.Speaker.isEnabled()){
-            M5.Speaker.begin();
-            while(!M5.Speaker.isEnabled()) { delay(10); }
-        }
-
-        normalize(record_pointer, record_size);
+        // normalize(record_pointer, record_size);
 
         // 再生開始
         if (!M5.Speaker.playRaw(record_pointer, record_size, sample_rate)) {
