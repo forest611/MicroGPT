@@ -2,21 +2,10 @@
 #include "WiFiManager.h"
 #include "AudioManager.h"
 #include "WebSocketManager.h"
-
-WebsocketsClient WebSocketManager::client;
-bool WebSocketManager::initialized = false;
-bool WebSocketManager::connectionActive = false;
-
-const size_t sample_rate = 16000;
-const size_t record_seconds = 1;
+#include "WhisperAPI.h"
 
 const String ssid = "Buffalo-G-AF20";
 const String password = "37xk647bmgfgv";
-
-bool isRecording = false;
-
-// 録音データのポインタ
-int16_t* record_pointer = nullptr;
 
 void setup() {
 
@@ -51,8 +40,6 @@ void setup() {
   // WebSocket接続
   WebSocketManager::begin(onWebSocketMessage);
 
-  //スピーカー有効化
-  AudioManager::enableSpeaker();
 }
 
 void loop() {
@@ -68,62 +55,18 @@ void loop() {
 
   // ボタンAを押している間は録音を行う
   if (M5.BtnA.isPressed()) {
-    //押し始め
-    if (!isRecording){
-      startListening();
-    }
     //録音中
-    transcribe();
+    WhisperAPI::transcribe();
   }
 
   //押し終わり
   if (M5.BtnA.wasReleased()) {
-    finishListening();    
+    WhisperAPI::finishListening();    
     M5.Display.println("Transcribing...");
   }
 
 }
 
-bool startListening(){
-  
-  record_pointer = (int16_t*)heap_caps_malloc(record_seconds * sample_rate * sizeof(int16_t), MALLOC_CAP_DMA);
-  if (record_pointer == nullptr) {
-    Serial.println("Failed to allocate memory");
-    return false;
-  }
-
-  isRecording = true;
-  WebSocketManager::send("start");
-  M5.Display.println("Listening...");
-  Serial.println("Listening...");
-
-  return true;
-}
-
-bool finishListening(){
-
-  // スピーカー有効化
-  // AudioManager::enableSpeaker();
-
-  isRecording = false;
-  WebSocketManager::send("end");
-
-  // 録音データを解放
-  heap_caps_free(record_pointer);
-
-  Serial.println("Listening Finished");
-
-  return true;
-}
-
-void transcribe(){
-
-  if (AudioManager::record(record_pointer,record_seconds, sample_rate)){
-    WebSocketManager::sendBinary((char*)record_pointer, record_seconds * sample_rate * sizeof(int16_t));
-    return;
-  }
-  Serial.println("Recording Failed");  
-}
 
 void onWebSocketMessage(WebsocketsMessage message) {
   // WebSocketからのメッセージを処理

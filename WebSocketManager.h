@@ -1,3 +1,6 @@
+#ifndef WEBSOCKET_MANAGER_H
+#define WEBSOCKET_MANAGER_H
+
 #include <ArduinoWebsockets.h>
 
 using namespace websockets;
@@ -23,6 +26,7 @@ private:
             M5.Display.println("WebSocket Connected!");
         } else {
             M5.Display.println("Connection failed.");
+            delay(1000);
         }
         
         return success;
@@ -84,3 +88,5 @@ public:
         }
     }
 };
+
+#endif // WEBSOCKET_MANAGER_H
