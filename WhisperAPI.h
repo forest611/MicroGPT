@@ -1,11 +1,6 @@
 #include <M5Unified.h>
 #include "WebSocketManager.h"
 
-//WebSocketClientの初期化
-WebsocketsClient WebSocketManager::client;
-bool WebSocketManager::initialized = false;
-bool WebSocketManager::connectionActive = false;
-
 class WhisperAPI {
 
 private:
@@ -17,7 +12,21 @@ private:
     // 録音データのポインタ
     static int16_t* record_pointer;
 
+    static WebSocketManager client;
+
+    static void onWebSocketMessage(WebsocketsMessage message) {
+        // WebSocketからのメッセージを処理
+        Serial.println(message.data());
+    }
+
+
 public:
+
+    // WebSocketの初期化
+    static void begin(){
+        client.begin(onWebSocketMessage);
+    }
+
     static bool startListening(){
 
         // マイク有効化
@@ -30,7 +39,7 @@ public:
         }
 
         isRecording = true;
-        WebSocketManager::send("start");
+        client.send("start");
         M5.Display.println("Listening...");
         Serial.println("Listening...");
 
@@ -42,7 +51,7 @@ public:
         // AudioManager::enableSpeaker();
 
         isRecording = false;
-        WebSocketManager::send("end");
+        client.send("end");
 
         // 録音データを解放
         heap_caps_free(record_pointer);
@@ -59,13 +68,20 @@ public:
         }
 
         if (AudioManager::record(record_pointer,record_seconds, sample_rate)){
-            WebSocketManager::sendBinary((char*)record_pointer, record_seconds * sample_rate * sizeof(int16_t));
+            client.sendBinary((char*)record_pointer, record_seconds * sample_rate * sizeof(int16_t));
             return;
         }
-        Serial.println("Recording Failed");  
+        Serial.println("Recording Failed");
+
     }
+
+    static void update() {
+        client.update();
+    }  
+
 };
 
 // WhisperAPIの静的メンバ変数の定義
 bool WhisperAPI::isRecording = false;
 int16_t* WhisperAPI::record_pointer = nullptr;
+WebSocketManager WhisperAPI::client("ws://192.168.11.33:3000/transcribe");

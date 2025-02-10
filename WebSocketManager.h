@@ -7,79 +7,96 @@ using namespace websockets;
 
 class WebSocketManager {
 private:
-    static WebsocketsClient client;
-    static bool initialized;
-    static bool connectionActive;
+    WebsocketsClient client;     // staticを外す
+    bool initialized;            // staticを外す
+    bool connectionActive;       // staticを外す
+    String hostUri;              // 接続先（URI）をメンバ変数で持つ
 
-    static bool connect() {
+    // 接続処理を行う
+    bool connect() {
         if (!initialized) {
             return false;
         }
 
         if (connectionActive) {
+            // すでに接続済みならそのままtrueを返す
             return true;
         }
 
-        bool success = client.connect("ws://192.168.11.33:3000/transcribe");
+        // hostUriはコンストラクタで渡される
+        bool success = client.connect(hostUri);
         if (success) {
             connectionActive = true;
-            M5.Display.println("WebSocket Connected!");
+            M5.Display.println("WebSocket Connected to: " + hostUri);
         } else {
-            M5.Display.println("Connection failed.");
-            delay(1000);
+            M5.Display.println("Connection failed: " + hostUri);
         }
         
         return success;
     }
 
 public:
-    static void begin(std::function<void(WebsocketsMessage)> onMessage) {
+    // コンストラクタで接続先URLを受け取るようにする
+    WebSocketManager(const String& uri) : initialized(false), connectionActive(false), hostUri(uri) {
+    }
+
+    // 初期化＋メッセージコールバックのセット
+    void begin(std::function<void(WebsocketsMessage)> onMessage) {
         if (initialized) {
             return;
         }
-
         initialized = true;
         connectionActive = false;
+
+        // コールバックを登録
         client.onMessage(onMessage);
         
+        // 初回接続を試みる
         if (!connect()) {
-            M5.Display.println("Initial connection failed. Will retry in loop.");
+            M5.Display.println("Initial connection failed. Will retry in update().");
         }
     }
 
-    static void disconnect() {
+    // 切断処理
+    void disconnect() {
         if (connectionActive) {
             client.close();
             connectionActive = false;
+            M5.Display.println("WebSocket Disconnected: " + hostUri);
         }
     }
 
-    static bool send(String message) {
+    // テキストメッセージの送信
+    bool send(const String& message) {
         if (!connectionActive && !connect()) {
             return false;
         }
         return client.send(message);
     }
 
-    static bool sendBinary(char* message, size_t length) {
+    // バイナリデータの送信
+    bool sendBinary(const char* message, size_t length) {
         if (!connectionActive && !connect()) {
             return false;
         }
         return client.sendBinary(message, length);
     }
 
-    static bool isConnected() {
+    // 接続中かどうか
+    bool isConnected() {
         if (!connectionActive) {
             return false;
         }
         bool available = client.available();
         if (!available) {
+            // 切断されていたらフラグを変更
             connectionActive = false;
         }
         return available;
     }
 
-    static void update() {
+    // 定期的に呼び出し、接続状態の更新や再接続などを行う
+    void update() {
         if (connectionActive) {
             client.poll();
         } else if (initialized) {
@@ -88,5 +105,4 @@ public:
         }
     }
 };
-
 #endif // WEBSOCKET_MANAGER_H

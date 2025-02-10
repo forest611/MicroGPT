@@ -38,14 +38,14 @@ void setup() {
   }
 
   // WebSocket接続
-  WebSocketManager::begin(onWebSocketMessage);
+  WhisperAPI::begin();
 
 }
 
 void loop() {
 
   M5.update();  // ボタンの状態を更新
-  WebSocketManager::update();
+  WhisperAPI::update();
   
   // WiFi接続が切れた場合の再接続処理
   if (!WiFiManager::isConnected()) {
@@ -67,8 +67,3 @@ void loop() {
 
 }
 
-
-void onWebSocketMessage(WebsocketsMessage message) {
-  // WebSocketからのメッセージを処理
-  Serial.println(message.data());
-}
